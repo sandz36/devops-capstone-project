@@ -38,6 +38,7 @@ class TestAccountService(TestCase):
     @classmethod
     def tearDownClass(cls):
         """Runs once before test suite"""
+        pass
 
     def setUp(self):
         """Runs before each test"""
@@ -123,33 +124,113 @@ class TestAccountService(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-    # ADD YOUR TEST CASES HERE ...
-        def test_get_account(self):
-            """It should Read a single Account"""
-            account = self._create_accounts(1)[0]
-            resp = self.client.get(
+    ######################################################################
+    #  R E A D   A C C O U N T   T E S T S
+    ######################################################################
+
+    def test_get_account(self):
+        """It should Read a single Account"""
+        account = self._create_accounts(1)[0]
+        resp = self.client.get(
             f"{BASE_URL}/{account.id}", content_type="application/json"
-            )
-            self.assertEqual(resp.status_code, status.HTTP_200_OK)
-            data = resp.get_json()
-            self.assertEqual(data["name"], account.name)
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(data["name"], account.name)
 
-        def test_get_account_not_found(self):
-            """It should not Read an Account that is not found"""
-            resp = self.client.get(f"{BASE_URL}/0")
-            self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+    def test_get_account_not_found(self):
+        """It should not Read an Account that is not found"""
+        resp = self.client.get(f"{BASE_URL}/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
-        def test_get_account_not_found_content(self):
-            """It should return error message when account not found"""
-            resp = self.client.get(f"{BASE_URL}/999999")
-            self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-            data = resp.get_json()
-            self.assertIn("was not found", data["message"])
+    def test_get_account_not_found_content(self):
+        """It should return error message when account not found"""
+        resp = self.client.get(f"{BASE_URL}/999999")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+        data = resp.get_json()
+        self.assertIn("not be found", data["message"])
 
-        def test_get_account_invalid_id(self):
-            """It should return 404 when account id is invalid"""
-            resp = self.client.get(f"{BASE_URL}/abc")
-            self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+    def test_get_account_invalid_id(self):
+        """It should return 404 when account id is invalid"""
+        resp = self.client.get(f"{BASE_URL}/abc")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
+    ######################################################################
+    #  L I S T   A C C O U N T S   T E S T S
+    ######################################################################
 
+    def test_get_account_list(self):
+        """It should Get a list of Accounts"""
+        self._create_accounts(5)
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertEqual(len(data), 5)
 
+    ######################################################################
+    #  U P D A T E   A C C O U N T   T E S T S
+    ######################################################################
+
+    def test_update_account(self):
+        """It should Update an existing Account"""
+        # Create an Account to update
+        test_account = AccountFactory()
+        resp = self.client.post(BASE_URL, json=test_account.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        
+        # Update the account
+        new_account = resp.get_json()
+        new_account["name"] = "Something Known"
+        resp = self.client.put(f"{BASE_URL}/{new_account['id']}", json=new_account)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        updated_account = resp.get_json()
+        self.assertEqual(updated_account["name"], "Something Known")
+
+    def test_update_account_not_found(self):
+        """It should not Update an Account that doesn't exist"""
+        resp = self.client.put(
+            f"{BASE_URL}/0",
+            json={"name": "Test", "address": "123 Test St"},
+            content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_account_bad_request(self):
+        """It should not Update an Account with invalid data"""
+        # Create an Account to update
+        test_account = AccountFactory()
+        resp = self.client.post(BASE_URL, json=test_account.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        
+        # Try to update with invalid data
+        account_id = resp.get_json()["id"]
+        resp = self.client.put(
+            f"{BASE_URL}/{account_id}",
+            json={"invalid": "data"},
+            content_type="application/json"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    ######################################################################
+    #  D E L E T E   A C C O U N T   T E S T S
+    ######################################################################
+
+    def test_delete_account(self):
+        """It should Delete an Account"""
+        account = self._create_accounts(1)[0]
+        resp = self.client.delete(f"{BASE_URL}/{account.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_account_not_found(self):
+        """It should not Delete an Account that doesn't exist"""
+        resp = self.client.delete(f"{BASE_URL}/0")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)  # DELETE returns 204 even if not found
+
+    ######################################################################
+    #  E R R O R   H A N D L E R   T E S T S
+    ######################################################################
+
+    def test_method_not_allowed(self):
+        """It should not allow an illegal method call"""
+        resp = self.client.delete(BASE_URL)  # DELETE not allowed on collection
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
