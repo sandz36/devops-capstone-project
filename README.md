@@ -56,6 +56,7 @@ The project follows industry-standard **DevOps practices**, demonstrating the co
 ```bash
 git clone <repository-url>
 cd <repository-directory>
+```
 # DevOps Capstone Template
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
