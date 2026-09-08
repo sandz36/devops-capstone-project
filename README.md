@@ -1,5 +1,9 @@
 # DevOps Capstone Project
 
+![Build Status](https://github.com/sandz36/devops-capstone-project/actions/workflows/ci-build.yaml/badge.svg)
+
+
+
 ## Customer Accounts Microservice
 
 A RESTful microservice for managing customer accounts, built as the culminating project for the **DevOps specialization on Coursera**.
