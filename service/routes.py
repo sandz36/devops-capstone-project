@@ -83,9 +83,9 @@ def get_accounts(account_id):
         abort(status.HTTP_404_NOT_FOUND, f"Account with id [{account_id}] could not be found.")
         # return the serialize() version of the account with a return code of status.HTTP_200_OK
 
-    return account.serialize(), status.HTTP_200_OK    
+    return account.serialize(), status.HTTP_200_OK
 
-  
+
 ######################################################################
 # UPDATE AN EXISTING ACCOUNT
 ######################################################################
